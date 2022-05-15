@@ -3,8 +3,8 @@
 
 import xml.etree.ElementTree as ET
 import lxml.html as HT
+from collections import defaultdict
 from PIL import Image, ImageDraw, ImageFont
-import csv
 
 class hOCR:
 
@@ -85,6 +85,25 @@ class hOCR:
             score = int(score[1]) / 100
 
         return bbox, score
+
+    def text_to_column(self, labels):
+        """Given a list of indexed labels, assign a token to its respective label.
+
+        Here, a label corresponds to what a k-means clustering analysis has determined
+        to be a column.
+
+        TODO: sort the columns
+
+        :param labels: The output of a k-means clusterer
+        :type labels: np.array
+        :returns: Tokens separated into each of their label groups
+        :rtype: dict
+        """
+        columns = defaultdict(list)
+        for label, span in zip(labels, self.word_spans):
+            columns[label].append(span.text)
+
+        return columns
 
     def show_structure(
         self,

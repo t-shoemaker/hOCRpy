@@ -130,7 +130,28 @@ class KMeans:
         self.labels = self._get_clusters(seed, return_labels=True)
 
         return self.clusters
+
+class ClusterResults:
+
+    def __init__(self, results, best_k, labels):
+        """Initialize a container to hold information about a clustering run/analysis.
+
+        :param results: The silhouette scores for a run of k clusters
+        :type results: dict
+        :param best_k: An optimal number of clusters
+        :type best_k: int
+        :param labels: Label assignments for each token in the hOCR
+        :type labels: np.array
+        """
+        self.results = results
+        self.best_k = best_k
+        self.labels = labels
        
+    def __repr__(self):
+        output = f"Column prediction\n-----------------\n"
+        output += f"Silhouette Scores: {self.results}\nBest k: {self.best_k}"
+        return output
+ 
 def silhouette_score(data, labels):
     """Calculate the silhouette score for k clusters on a dataset.
 

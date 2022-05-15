@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from .clustering import KMeans, silhouette_score
+from .clustering import *
 import numpy as np
 import scipy.stats
 import matplotlib.pyplot as plt
@@ -75,7 +75,6 @@ def predict_columns(
     r2=0.1,
     tol=0.001,
     iters=500,
-    return_scores=False
     ):
     """Use k-means clustering/silhouette scores to determine the number of columns.
 
@@ -96,10 +95,8 @@ def predict_columns(
     :type tol: float
     :param iters: The number of iterations at which to stop clustering
     :type iters: int
-    :param return_scores: Whether to return all of the silhouette scores
-    :type return_scores: bool
-    :returns: If `return_scores`, return clusters with their scores, otherwis return optimal k
-    :type: dict, int
+    :returns: A ClusterResults object, which contains information about results, best k, and labels
+    :type: class
     """
     data = CoordData(hocr)
 
@@ -119,12 +116,12 @@ def predict_columns(
         score = silhouette_score(data.cluster_on, data.labels)
         results[k] = score
 
-    # Return the cluster: score dictionary
-    if return_scores:
-        return results
+    # Get the optimal number of clusters, recluster on that, and get the label assignments
+    best_k = max(results, key=results.get)
+    data.cluster(best_k, dim1=dim1, dim2=dim2, tol=tol, iters=iters)
 
-    # Or return the optimal number of clusters
-    return max(results, key=results.get)
+    # Store everything in a container and return it
+    return ClusterResults(results, best_k, data.labels)
 
 def bbox_plot(
     hocr,
