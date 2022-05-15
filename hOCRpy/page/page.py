@@ -86,7 +86,13 @@ class hOCR:
 
         return bbox, score
 
-    def show_structure(self, which='line', fill='black', bfill='white', return_image=False):
+    def show_structure(
+        self,
+        which='line',
+        fill='black',
+        bfill='white',
+        return_image=False
+        ):
         """Show a high-level view of page elements.
 
         :param which: The type of view to return
@@ -132,7 +138,7 @@ class hOCR:
         scale=False,
         use_font='Arial.ttf',
         return_image=False
-    ):
+        ):
         """Render the page with tokens.
 
         :param outline: Color of the bounding boxes, pass None for no bounding box outline
@@ -201,7 +207,7 @@ class PageImage:
         show_conf=False,
         scale=False,
         use_font='Arial.ttf'
-    ):
+        ):
         """Render a page.
 
         :param tokens: The tokens to draw
@@ -242,7 +248,13 @@ class PageImage:
 
         return self.img
 
-    def _scale_font(self, token, bbox, font_size=16, use_font='Arial.ttf'):
+    def _scale_font(
+        self,
+        token,
+        bbox,
+        font_size=16,
+        use_font='Arial.ttf'
+        ):
         """For a given token, find the font size that best fills the bounding box area.
 
         :param token: Text to render
