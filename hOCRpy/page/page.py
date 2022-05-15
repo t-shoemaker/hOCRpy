@@ -31,6 +31,11 @@ class hOCR:
         return self.tree.findall('.//span[@class="ocrx_word"]')
 
     @property
+    def tokens(self):
+        """Retrieve tokens from each word span."""
+        return [span.text for span in self.word_spans]
+
+    @property
     def num_tokens(self):
         """Count the number of tokens on the page."""
         return len(self.word_spans)
@@ -130,6 +135,7 @@ class hOCR:
             'area': {'div': 'div', 'class': 'ocr_carea'},
             'paragraph': {'div': 'p', 'class': 'ocr_par'},
             'line': {'div': 'span', 'class': 'ocr_line'},
+            'token': {'div': 'span', 'class': 'ocrx_word'}
         }
         if which not in OPTS:
             raise ValueError(f"Valid options: {', '.join(OPTS.keys())}")
