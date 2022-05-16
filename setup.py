@@ -15,5 +15,11 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     packages=find_packages(),
-    install_requires=[]
+    install_requires=[
+        'lxml==4.8.0',
+        'matplotlib==3.5.2',
+        'numpy==1.21.6',
+        'Pillow==9.1.0',
+        'scipy==1.7.3', 
+    ]
 )
