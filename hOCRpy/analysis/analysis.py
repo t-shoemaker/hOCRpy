@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from .clustering import *
+from .clustering import KMeans, ClusterResults, silhouette_score
 import numpy as np
 import scipy.stats
 import matplotlib.pyplot as plt

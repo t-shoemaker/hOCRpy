@@ -4,19 +4,35 @@
 import xml.etree.ElementTree as ET
 import lxml.html as HT
 from collections import defaultdict
+import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+from typing import Dict, List, Tuple, Union
 
 class hOCR:
 
-    def __init__(self, path, tesseract_output=True):
-        """Load and parse the hOCR."""
+    def __init__(self, path: str, tesseract_output: bool=True):
+        """Load and parse the hOCR.
+
+        Parameters
+        ----------
+        path
+            Path to the hOCR file
+        tesseract_output
+            Whether the hOCR has been produced by Tesseract
+        """
         if tesseract_output:
             self.tree = HT.parse(path)
         else:
             self.tree = ET.parse(path)
 
+    def __repr__(self) -> str:
+        x, y = self.dim
+        output = f"{x}x{y} page with {self.num_tokens} tokens"
+
+        return output
+
     @property
-    def dim(self):
+    def dim(self) -> Tuple[int]:
         """Find the dimensions of the page."""
         div = self.tree.find('.//div[@class="ocr_page"]')
         div = div.attrib['title'].split(';')
@@ -26,47 +42,68 @@ class hOCR:
         return tuple(dim)
 
     @property
-    def word_spans(self):
-        """Retrieve the word spans from the hOCR."""
+    def word_spans(self) -> Union[List[HT.HtmlElement], List[ET.Element]]:
+        """Retrieve the word spans from the hOCR.
+
+        Returns
+        -------
+        spans
+            A list of XML or HTML generators
+        """
         return self.tree.findall('.//span[@class="ocrx_word"]')
 
     @property
-    def tokens(self):
+    def tokens(self) -> List[str]:
         """Retrieve tokens from each word span."""
         return [span.text for span in self.word_spans]
 
     @property
-    def num_tokens(self):
+    def num_tokens(self) -> int:
         """Count the number of tokens on the page."""
         return len(self.word_spans)
 
     @property
-    def text(self):
+    def text(self) -> str:
         """Return a plaintext blob of all the page tokens."""
         return ' '.join(span.text for span in self.word_spans)
 
     @property
-    def token_data(self):
-        """Retrieve bounding box and confidence score data for every token."""
+    def token_data(self) -> List[Tuple[List[int], float]]:
+        """Retrieve bounding box and confidence score data for every token.
+
+        Returns
+        -------
+        token_data
+            A list of tuples, where the first element therein is a list of
+            bounding box positions and the second is a confidence score
+        """
         return [self._extract_data(span) for span in self.word_spans]
 
     @property
-    def bboxes(self):
+    def bboxes(self) -> List[int]:
         """Return the bounding boxes from the token data."""
         return [i[0] for i in self.token_data]
 
     @property
-    def scores(self):
+    def scores(self) -> List[float]:
         """Return the confidence scores from the token data."""
         return [i[1] for i in self.token_data]
 
-    def _extract_data(self, div):
+    def _extract_data(
+        self,
+        div: Union[HT.HtmlElement, ET.Element]
+    ) -> Tuple[List[int], float]:
         """Extract the bounding box and confidence score of a div.
 
-        :param div: The div to extract
-        :type div: XML generator
-        "returns: Bounding box (list) and score (int)
-        :rtype: tup
+        Parameters
+        ----------
+        div
+            The div to extract
+
+        Returns
+        -------
+        data
+            A bounding box (list) and confidence score (float)
         """
         # Certain page structures do not have extra info in their titles, so 
         # we check for this first
@@ -91,18 +128,24 @@ class hOCR:
 
         return bbox, score
 
-    def text_to_column(self, labels):
-        """Given a list of indexed labels, assign a token to its respective label.
+    def text_to_column(self, labels: np.array) -> Dict[int, str]:
+        """Given a list of indexed labels, assign a token to its respective
+        label.
 
-        Here, a label corresponds to what a k-means clustering analysis has determined
-        to be a column.
+        Here, a label corresponds to what a k-means clustering analysis has
+        determined to be a column.
 
         TODO: sort the columns
 
-        :param labels: The output of a k-means clusterer
-        :type labels: np.array
-        :returns: Tokens separated into each of their label groups
-        :rtype: dict
+        Parameters
+        ----------
+        labels
+            The output of a k-means clusterer
+
+        Returns
+        -------
+        columns
+            Tokens separated into each of their label groups
         """
         columns = defaultdict(list)
         for label, span in zip(labels, self.word_spans):
@@ -112,24 +155,33 @@ class hOCR:
 
     def show_structure(
         self,
-        which='line',
-        fill='black',
-        bfill='white',
-        return_image=False
-        ):
+        which: str='line',
+        fill: str='black',
+        bfill: str='white',
+        return_image: bool=False
+    ) -> Union[None, Image.Image]:
         """Show a high-level view of page elements.
 
-        :param which: The type of view to return
-        :type which: str
-        :raises ValueError: Valid options for `which` are area, paragraph, line
-        :param fill: Fill color
-        :type fill: str
-        :param bfill: Background color
-        :type bfill: str
-        :param return_image: Specify whether to render or return the image
-        :type return_image: bool
-        :returns: Rendered page
-        :rtype: PIL image
+        Parameters
+        ----------
+        which
+            The type of view to return
+        fill
+            Fill color
+        bfill
+            Background color
+        return_image
+            Whether to render or return the image
+
+        Returns
+        -------
+        structure
+            The rendered page
+
+        Raises
+        ------
+        ValueError
+            If provided invalid options for 'which'
         """
         OPTS = {
             'area': {'div': 'div', 'class': 'ocr_carea'},
@@ -157,29 +209,34 @@ class hOCR:
 
     def show_page(
         self,
-        outline='black',
-        bfill='white',
-        show_conf=False,
-        scale=False,
-        use_font='Arial.ttf',
-        return_image=False
-        ):
+        outline: Union[None, str]='black',
+        bfill: str='white',
+        show_conf: bool=False,
+        scale: bool=False,
+        use_font: str='Arial.ttf',
+        return_image: bool=False
+    ) -> Union[None, Image.Image]:
         """Render the page with tokens.
 
-        :param outline: Color of the bounding boxes, pass None for no bounding box outline
-        :type outline: str or None
-        :param bfill: The background color of the page
-        :type bfill: str
-        :param show_conf: Change the opacity of tokens to reflect their confidence score
-        :type show_conf: bool
-        :param scale: Scale the font size for each token to fill the bounding box
-        :type scale: bool
-        :param use_font: Font to use (can be a path)
-        :type use_font: str
-        :param return_image: Specify whether to render or return the image
-        :type return_image: bool
-        :Returns: Rendered page
-        :rtype: PIL image
+        Parameters
+        ----------
+        outline
+            Color of the bounding boxes, pass None for no bounding box outline
+        bfill
+            Background color
+        show_conf
+            Change the opacity of tokens to reflect their confidence score
+        scale
+            Scale the font size for each token to fill its bounding box
+        use_font
+            Font to use (can be a path)
+        return_image
+            Whether to render or return the image
+
+        Returns
+        -------
+        page
+            Rendered page
         """
         tokens = [span.text for span in self.word_spans]
         
@@ -204,18 +261,32 @@ class hOCR:
 
 class PageImage:
 
-    def __init__(self, size, color='white'):
+    def __init__(self, size: int, color: str='white'):
+        """Initialize a new page
+
+        Parameters
+        ----------
+        size
+            Size of the image
+        color
+            Color
+        """
         self.img = Image.new(mode='RGB', size=size, color=color)
     
-    def make_structure(self, bboxes, fill='black'):
+    def make_structure(self, bboxes: list, fill: str='black') -> Image.Image:
         """Show a high-level view of the hOCR divs.
 
-        :param bboxes: The bounding box data
-        :type bboxes: list
-        :param fill: Fill color
-        :type fill: str
-        :returns: Rendered page
-        :rtype: PIL image
+        Parameters
+        ----------
+        bboxes
+            The bounding box data
+        fill
+            Fill color
+
+        Returns
+        -------
+        img
+            Rendered page
         """
         draw = ImageDraw.Draw(self.img)
         for bbox in bboxes:
@@ -225,32 +296,37 @@ class PageImage:
     
     def make_page(
         self,
-        tokens,
-        bboxes,
-        scores,
-        outline='black',
-        show_conf=False,
-        scale=False,
-        use_font='Arial.ttf'
-        ):
+        tokens: list,
+        bboxes: list,
+        scores: list,
+        outline: Union[None, str]='black',
+        show_conf: bool=False,
+        scale: bool=False,
+        use_font: str='Arial.ttf'
+    ) -> Image.Image:
         """Render a page.
 
-        :param tokens: The tokens to draw
-        :type tokens: list
-        :param bboxes: The bounding boxes to use
-        :type bboxes: list
-        :param scores: The confidence scores for each token
-        :type scores: list
-        :param outline: Color of the bounding boxes, pass None for no bounding box
-        :type outline: str or None
-        :param show_conf: Change the opacity of tokens to reflect their confidence score
-        :type show_conf: bool
-        :param scale: Scale the font size for each token to fill the bounding box
-        :type scale: bool
-        :param use_font: Font to use (can be a path)
-        :type use_font: str
-        :returns: Rendered page
-        :rtype: PIL image
+        Parameters
+        ----------
+        tokens
+            The tokens to draw
+        bboxes
+            The bounding boxes to use
+        scores
+            The confidence scores for each token
+        outline
+            Color of the bounding boxes, pass None for no bounding boxes
+        show_conf
+            Change the opacity of tokens to reflect their confidence scores
+        scale
+            Scale the font size for each token to fill its bounding box
+        use_font
+            Font to use (can be a path)
+
+        Returns
+        -------
+        img
+            Rendered page
         """
         draw = ImageDraw.Draw(self.img)
         font = ImageFont.truetype(use_font)
@@ -259,7 +335,12 @@ class PageImage:
             draw.rectangle(bbox, outline=outline)
 
             if scale:
-                font_size = self._scale_font(token, bbox, font_size=16, use_font='Arial.ttf')
+                font_size = self._scale_font(
+                    token,
+                    bbox,
+                    font_size=16,
+                    use_font=use_font
+                )
                 font = ImageFont.truetype(use_font, font_size)
 
             draw.text(
@@ -275,23 +356,29 @@ class PageImage:
 
     def _scale_font(
         self,
-        token,
-        bbox,
-        font_size=16,
-        use_font='Arial.ttf'
-        ):
-        """For a given token, find the font size that best fills the bounding box area.
+        token: str,
+        bbox: list,
+        font_size: int=16,
+        use_font: str='Arial.ttf'
+    ) -> int:
+        """For a given token, find the font size that best fills the bounding
+        box area.
 
-        :param token: Text to render
-        :type token: str
-        :param bbox: The bounding box to fill
-        :type bbox: list
-        :param font_size: The size to start at
-        :type font_size: int
-        :param use_font: The font to use
-        :type use_font: str
-        :returns: Font size that best approximates the bounding box area
-        :rtype: int
+        Parameters
+        ----------
+        token
+            Text to render
+        bbox
+            The bounding box to fill
+        font_size
+            The size to start at
+        use_font
+            Font to use
+
+        Returns
+        -------
+        size
+            Font size that best approximates the bounding box area
         """
         area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
         size = None
@@ -302,3 +389,4 @@ class PageImage:
             font_size -= 1
 
         return font_size
+

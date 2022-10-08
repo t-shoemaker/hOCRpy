@@ -3,18 +3,26 @@
 
 import numpy as np
 from scipy.spatial.distance import cdist
+from typing import Dict, Union
 
 class KMeans:
 
-    def __init__(self, k, tol=0.001, iters=500):
-        """Predefine number of clusters as well as the tolerance and iterations.
+    def __init__(self, k: int, tol: float=0.001, iters: int=500):
+        """Predefine number of clusters as well as the tolerance and
+        iterations.
 
-        :param k: The number of clusters
-        :type k: int
-        :param tol: Cutoff for stopping the clustering
-        :type tol: float
-        :param iters: Number of iterations for another cutoff method
-        :type iters: int
+        Parameters
+        ----------
+        k
+            The number of clusters
+        tol
+            Cutoff for stopping the clustering
+        iters
+            Number of iterations for an alternative way to set the cutoff
+
+        Raises
+        ------
+            ValueError if less than two clusters are specified
         """
         if k < 2:
             raise ValueError("You must select more than one cluster!")
@@ -23,15 +31,20 @@ class KMeans:
         self.tol = tol
         self.iters = iters
 
-    def _dist(self, a, b):
+    def _dist(self, a: np.array, b: np.array) -> np.array:
         """Compute the Euclidean distance between matrix a and matrix b.
 
-        :param a: First matrix
-        :type a: np.array
-        :param b: Second matrix
-        :type b: np.array
-        :returns: A vector of distances
-        :rtype: np.array
+        Parameters
+        ----------
+        a
+            First matrix
+        b
+            Second matrix
+
+        Returns
+        -------
+        dists
+            A vector of distances
         """
         # Get the square of each matrix
         a_square = np.reshape(np.sum(a * a, axis=1), (a.shape[0], 1))
@@ -42,15 +55,25 @@ class KMeans:
 
         return np.sqrt(-2 * ab + b_square + a_square)
 
-    def _get_clusters(self, centroids, return_labels=False):
+    def _get_clusters(
+        self,
+        centroids: np.array,
+        return_labels: bool=False
+    ) -> Union[Dict[int, int], np.array]:
         """Determine which observations are closest to each cluster.
 
-        :param centroids: The center points
-        :type centroids: np.array
-        :param return_labels: Return the cluster labels for each data point
-        :type return_labels: bool
-        :returns: If not return_labels, a dictionary of cluster: data pairs; otherwise, labels
-        :rtype: dict, np.array
+        Parameters
+        ----------
+        centroids
+            The center points
+        return_labels
+            Whether to return the cluster labels for each data point
+
+        Returns
+        -------
+        clusters
+            If not return_labels, a dictionary of cluster: data pairs,
+            otherwise, the labels
         """
         # Create a dict to hold the clusters
         clusters = {}
@@ -72,19 +95,28 @@ class KMeans:
 
         return clusters
 
-    def _converged(self, old_centroids, new_centroids):
+    def _converged(
+        self,
+        old_centroids: np.array,
+        new_centroids: np.array
+    ) -> bool:
         """Check to see whether the centroids are still moving.
 
         This is a simple check: look at the distance between the old centroids
         and the new ones. If it hasn't changed much, we're done. The tolerance 
         metric defines the cutoff
 
-        :param old_centroids: Prior centers of clusters
-        :type old_centroids: np.array
-        :param new_centroids: New centers of clusters
-        :type new_centroids: np.array
-        :returns: Indicate whether the centers should continue moving
-        :rtype: bool
+        Parameters
+        ----------
+        old_centroids
+            Prior centers of clusters
+        new_centroids
+            New centers of clusters
+
+        Returns
+        -------
+        converged
+            Indicte whether the centers should continue moving
         """
         # Get distances
         distances = self._dist(old_centroids, new_centroids)
@@ -95,7 +127,7 @@ class KMeans:
 
         return converged
 
-    def predict(self, data):
+    def predict(self, data: np.array) -> np.array:
         """Fit the clusterer and partition the data into k clusters."""
         self.data = data
         n_samples = data.shape[0]
@@ -133,34 +165,49 @@ class KMeans:
 
 class ClusterResults:
 
-    def __init__(self, results, best_k, labels):
-        """Initialize a container to hold information about a clustering run/analysis.
+    def __init__(
+        self,
+        results: Dict[int, float],
+        best_k: int,
+        labels:
+        np.array
+    ):
+        """Initialize a container to hold information about a clustering
+        run/analysis.
 
-        :param results: The silhouette scores for a run of k clusters
-        :type results: dict
-        :param best_k: An optimal number of clusters
-        :type best_k: int
-        :param labels: Label assignments for each token in the hOCR
-        :type labels: np.array
+        Parameters
+        ----------
+        results
+            The silhouette scores for a run of k clusters
+        best_k
+            An optional number of clusters
+        labels
+            Label assignments for each token in the hOCR
         """
         self.results = results
         self.best_k = best_k
         self.labels = labels
        
-    def __repr__(self):
+    def __repr__(self) -> str:
         output = f"Column prediction\n-----------------\n"
         output += f"Silhouette Scores: {self.results}\nBest k: {self.best_k}"
+
         return output
  
-def silhouette_score(data, labels):
+def silhouette_score(data: np.array, labels: np.array) -> float:
     """Calculate the silhouette score for k clusters on a dataset.
 
-    :param data: The dataset
-    :type data: np.array
-    :param labels: Cluster assignments for each point in the dataset
-    :type labels: np.array
-    :returns: Silhouette score
-    :rtype: int
+    Parameters
+    ----------
+    data
+        The dataset
+    labels
+        Cluster assignments for each point in the dataset
+
+    Returns
+    -------
+    score
+        Mean silhouette score
     """
     # Partition the data into their respective clusters
     clusters = {k: np.where(labels == k) for k in np.unique(labels)}
@@ -191,3 +238,4 @@ def silhouette_score(data, labels):
 
     # Return the average silhouette score for all clusters
     return np.mean(scores)
+
