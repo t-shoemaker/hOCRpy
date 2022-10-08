@@ -159,7 +159,7 @@ class hOCR:
         fill: str='black',
         bfill: str='white',
         return_image: bool=False
-    ) -> Union[None, Image.Image]:
+    ) -> Image.Image:
         """Show a high-level view of page elements.
 
         Parameters
@@ -215,7 +215,7 @@ class hOCR:
         scale: bool=False,
         use_font: str='Arial.ttf',
         return_image: bool=False
-    ) -> Union[None, Image.Image]:
+    ) -> Image.Image:
         """Render the page with tokens.
 
         Parameters
@@ -377,7 +377,7 @@ class PageImage:
 
         Returns
         -------
-        size
+        font_size
             Font size that best approximates the bounding box area
         """
         area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
