@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from .page import hOCR
 from .clustering import KMeans, ClusterResults, silhouette_score
 import numpy as np
 import scipy.stats
@@ -8,19 +9,16 @@ import matplotlib.pyplot as plt
 
 class CoordData:
 
-    def __init__(self, hocr):
+    def __init__(self, hocr: hOCR):
         """Extract the bounding boxes from a hOCR page."""
-        x0 = np.array([b[0] for b in hocr.bboxes])
-        y0 = np.array([b[1] for b in hocr.bboxes])
-        x1 = np.array([b[2] for b in hocr.bboxes])
-        y1 = np.array([b[3] for b in hocr.bboxes])
+        arr = np.array(one_col.bboxes)
         # Store in a dictionary, along with the indicies
         self.coords = {
-            'x0': x0,
-            'y0': y0,
-            'x1': x1,
-            'y1': y1,
-            'indices': np.array(range(len(hocr.bboxes)))
+            'x0': arr[:,0],
+            'y0': arr[:,1],
+            'x1': arr[:,2],
+            'y1': arr[:,3],
+            'indices': np.array(range(len(arr)))
         }
 
     def fit_lm(self, x='', y=''):

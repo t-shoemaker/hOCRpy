@@ -1,2 +1,2 @@
-from .analysis.analysis import *
-from .page.page import *
+from .analysis import *
+from .page import *
