@@ -98,7 +98,7 @@ class LinearRegression:
 
         return r
 
-    def split_data(self, test_size: float=0.2) -> Tuple[np.array]:
+    def _split_data(self, test_size: float=0.2) -> Tuple[np.array]:
         """Split data into train and test batches.
 
         Parameters
@@ -127,7 +127,7 @@ class LinearRegression:
 
         return test_x, train_x, test_y, train_y
 
-    def train(
+    def fit(
         self,
         test_size: float=.2,
         alpha: float=0.5,
@@ -148,7 +148,7 @@ class LinearRegression:
             The iterations at which to stop training
         """
         # Split the data and create a counter
-        test_x, train_x, test_y, train_y = self.split_data(test_size)
+        test_x, train_x, test_y, train_y = self._split_data(test_size)
         i = 0
 
         while True:
@@ -157,8 +157,7 @@ class LinearRegression:
             self.gradient, self.mse = self._cost(self.w, train_x, train_y)
             new_w = self.w - alpha * self.gradient
 
-            # If we're below the tolerance, calculate the cost on the holdout
-            # data and break
+            # If we're below the tolerance, break
             if np.sum(abs(new_w - self.w)) < tol:
                 self.converged = True
                 break

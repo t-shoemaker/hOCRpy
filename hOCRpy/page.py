@@ -156,9 +156,8 @@ class hOCR:
     def show_structure(
         self,
         which: str='line',
-        fill: str='black',
-        bfill: str='white',
-        return_image: bool=False
+        return_image: bool=False,
+        **kwargs
     ) -> Image.Image:
         """Show a high-level view of page elements.
 
@@ -166,12 +165,11 @@ class hOCR:
         ----------
         which
             The type of view to return
-        fill
-            Fill color
-        bfill
-            Background color
         return_image
             Whether to render or return the image
+        kwargs
+            Optional arguments for styling the page and bounding box color. See
+            the PageImage class
 
         Returns
         -------
@@ -193,11 +191,15 @@ class hOCR:
             raise ValueError(f"Valid options: {', '.join(OPTS.keys())}")
 
         # Query the XPath and extract the bounding boxes 
-        divs = self.tree.findall(f".//{OPTS[which]['div']}[@class='{OPTS[which]['class']}']")
+        divs = self.tree.findall(
+            f".//{OPTS[which]['div']}[@class='{OPTS[which]['class']}']"
+        )
         divs = [self._extract_data(div) for div in divs]
         bboxes = [div[0] for div in divs]
 
         # Make a page image
+        fill = kwargs.get('fill', 'black')
+        bfill = kwargs.get('bfill', 'white')
         img = PageImage(self.dim, bfill)
         # Call the structure renderer
         structure = img.make_structure(bboxes, fill=fill)
@@ -209,29 +211,21 @@ class hOCR:
 
     def show_page(
         self,
-        outline: Union[None, str]='black',
-        bfill: str='white',
-        show_conf: bool=False,
         scale: bool=False,
-        use_font: str='Arial.ttf',
-        return_image: bool=False
+        return_image: bool=False,
+        **kwargs
     ) -> Image.Image:
         """Render the page with tokens.
 
         Parameters
         ----------
-        outline
-            Color of the bounding boxes, pass None for no bounding box outline
-        bfill
-            Background color
-        show_conf
-            Change the opacity of tokens to reflect their confidence score
         scale
             Scale the font size for each token to fill its bounding box
-        use_font
-            Font to use (can be a path)
         return_image
             Whether to render or return the image
+        kwargs
+            Optional arguments for styling the bounding boxes. See the
+            PageImage class
 
         Returns
         -------
@@ -241,17 +235,20 @@ class hOCR:
         tokens = [span.text for span in self.word_spans]
         
         # Make a page image
-        img = PageImage(self.dim, bfill)
+        img = PageImage(self.dim, kwargs.get('bfill', 'white'))
 
         # Call the page renderer
         page = img.make_page(
             tokens,
             self.bboxes,
             self.scores,
-            outline,
-            show_conf,
-            scale,
-            use_font
+            outline=kwargs.get('outline', 'black'),
+            show_conf=kwargs.get('show_conf', False),
+            scale=scale,
+            use_font=kwargs.get('use_font', 'Arial.ttf'),
+            text_fill=kwargs.get('text_fill', 'black'),
+            align=kwargs.get('align', 'center'),
+            anchor=kwargs.get('anchor', 'ms')
         )
 
         if not return_image:
@@ -302,9 +299,14 @@ class PageImage:
         outline: Union[None, str]='black',
         show_conf: bool=False,
         scale: bool=False,
-        use_font: str='Arial.ttf'
+        use_font: str='Arial.ttf',
+        text_fill: str='black',
+        align: str='center',
+        anchor: str='ms'
     ) -> Image.Image:
         """Render a page.
+
+        TODO: implement show_conf, which wll be an opacity value
 
         Parameters
         ----------
@@ -322,6 +324,12 @@ class PageImage:
             Scale the font size for each token to fill its bounding box
         use_font
             Font to use (can be a path)
+        text_fill
+            Text color
+        align
+            Text alignment
+        anchor
+            Text anchor
 
         Returns
         -------
@@ -346,10 +354,10 @@ class PageImage:
             draw.text(
                 xy=bbox[:2],
                 text=token,
-                fill='black',
+                fill=text_fill,
                 font=font,
-                align='center',
-                anchor='ms'
+                align=align,
+                anchor=anchor
             )
 
         return self.img

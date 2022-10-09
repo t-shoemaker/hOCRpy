@@ -22,14 +22,7 @@ class CoordData:
             'indices': np.array(range(len(arr)))
         }
 
-    def fit_lm(
-        self, x: str='',
-        y: str='',
-        test_size: float=.2,
-        alpha: float=0.5,
-        tol: float=1e-5,
-        iters: int=500
-    ) -> None:
+    def fit_lm(self, x: str='', y: str='', **kwargs) -> None:
         """Fit a least-squares linear regression model to the coordinates.
 
         Parameters
@@ -38,14 +31,9 @@ class CoordData:
             Dimension 1 (e.g. x0, y0, etc.)
         y
             Dimension 2 (e.g. x1, y1, etc.)
-        test_size
-            The proportional size of the testing data
-        alpha
-            Learning rate
-        tol
-            The tolerance at which to stop training
-        iters
-            The iterations at which to stop training
+        kwargs
+            Optional arguments for the linear regression model. See the
+            LinearRegression class for parameters
 
         Raises
         ------
@@ -57,7 +45,12 @@ class CoordData:
 
         x, y = self.data[x], self.data[y]
         model = LinearRegression(x, y)
-        model.train(test_size, alpha, tol, iters)
+        model.fit(
+            test_size=kwargs.get('test_size', 0.2),
+            alpha=kwargs.get('alpha', 0.5),
+            tol=kwargs.get('tol', 1e-5),
+            iters=kwargs.get('iters', 500)
+        )
         self.lm = model
 
     def cluster(
@@ -65,9 +58,8 @@ class CoordData:
         k: int,
         dim1: str='indices',
         dim2: str='x0',
-        tol: float=0.001,
-        iters: int=500
-    ):
+        **kwargs
+    ) -> None:
         """Do k-means clustering on the points.
 
         Parameters
@@ -78,10 +70,8 @@ class CoordData:
             First dimension
         dim2
             Second dimension
-        tol
-            The tolerance at which to stop clustering
-        iters
-            Number of iterations at which to stop clustering
+        kwargs
+            Optional arguments for K-means clustering. See the Kmeans class
 
         Raises
         ------
@@ -96,18 +86,19 @@ class CoordData:
         self.cluster_on = np.array(to_cluster)
 
         # Initialize and fit a k-means clusterer
-        kmeans = KMeans(k, tol=tol, iters=iters)
+        kmeans = KMeans(
+            k,
+            tol=kwargs.get('tol', 0.001),
+            iters=kwargs.get('iters', 500)
+        )
         self.clusters = kmeans.predict(self.cluster_on)
         self.labels = kmeans.labels
 
-def lm_model(
+def lr_model(
     hocr: hOCR,
     x: str='indices',
     y: str='x0',
-    test_size: float=.2,
-    alpha: float=0.5,
-    tol: float=1e-5,
-    iters: int=500
+    **kwargs
 ) -> LinearRegression:
     """Return a least-squares linear regression model.
 
@@ -117,23 +108,17 @@ def lm_model(
         Dimension 1 (e.g. x0, y0, etc.)
     y
         Dimension 2 (e.g. x1, y1, etc.)
-    test_size
-        The proportional size of the testing data
-    alpha
-        Learning rate
-    tol
-        The tolerance at which to stop training
-    iters
-        The iterations at which to stop training
+    kwargs
+        Optional arguments for the lienar regression model. See the
+        LinearRegression class for parameters
 
     Returns
     -------
     lm
         The results of the regression model
-
     """
     data = CoordData(hocr)
-    data.fit_lm(x, y)
+    data.fit_lm(x, y, **kwargs)
 
     return data.lm
 
@@ -143,10 +128,9 @@ def predict_columns(
     dim1: str='indices',
     dim2: str='x0',
     r2: float=0.1,
-    tol: float=0.001,
-    iters: int=500,
+    **kwargs
 ) -> ClusterResults:
-    """Use k-means clustering/silhouette scores to determine the number of
+    """Use K-means clustering/silhouette scores to determine the number of
     columns.
 
     The idea here is that the optimal number of clusters in the dataset will
@@ -164,15 +148,13 @@ def predict_columns(
         Second dimension
     r2
         A cutoff for the R^2 value; a value below this defaults to one column
-    tol
-        The tolerance at which to stop clustering
-    iters
-        The number of iterations at which to stop clustering
+    kwargs
+        Optional arguments for the K-means clustering. See the KMeans class
 
     Returns
     -------
     results
-        A ClusterReesults object, which contains information about the results,
+        A ClusterResults object, which contains information about the results,
         best k, and labels
     """
     data = CoordData(hocr)
@@ -188,14 +170,14 @@ def predict_columns(
     # Grid search the k space
     results = {}
     for k in range(2, max_k):
-        data.cluster(k, dim1=dim1, dim2=dim2, tol=tol, iters=iters)
+        data.cluster(k, dim1=dim1, dim2=dim2, **kwargs)
         score = silhouette_score(data.cluster_on, data.labels)
         results[k] = score
 
     # Get the optimal number of clusters, recluster on that, and get the label
     # assignments
     best_k = max(results, key=results.get)
-    data.cluster(best_k, dim1=dim1, dim2=dim2, tol=tol, iters=iters)
+    data.cluster(best_k, dim1=dim1, dim2=dim2, **kwargs)
 
     # Store everything in a container and return it
     return ClusterResults(results, best_k, data.labels)
@@ -205,13 +187,7 @@ def bbox_plot(
     x: str='indices',
     y: str='x0',
     regression_line: bool=True,
-    test_size: float=.2,
-    alpha: float=0.5,
-    tol: float=1e-5,
-    iters: int=500,
-    figx: int=12,
-    figy: int=9,
-    title: str=''
+    **kwargs
 ) -> Figure:
     """Plot coordinate data from the bounding boxes.
 
@@ -225,20 +201,9 @@ def bbox_plot(
         Data for the Y axis
     regression_line
         Whether to fit a linear model and plot the regression line
-    test_size
-        The proportional size of the testing data
-    alpha
-        Learning rate
-    tol
-        The tolerance at which to stop training
-    iters
-        The number of iteratinos at which to stop training
-    figx
-        Figure width
-    figy
-        Figure height
-    title
-        Figure title
+    kwargs
+        Optional arguments for the linear regression model and plotting. See
+        the LinearRegression class for parameters
 
     Returns
     -------
@@ -248,16 +213,22 @@ def bbox_plot(
     data = CoordData(hocr)
     x_data, y_data = data.data[x], data.data[y]
 
+    figx, figy = kwargs.get('figx', 12), kwargs.get('figy', 9)
     fig, ax = plt.subplots(figsize=(figx, figy))
     plt.plot(x_data, y_data)
 
     # Optionally add a regression line
     if regression_line:
-        data.fit_lm(x, y, test_size, alpha, tol, iters)
-        plt.plot(x_data, data.lm.regression_line, c='red', label="Regression line")
+        data.fit_lm(x, y, **kwargs)
+        plt.plot(
+            x_data,
+            data.lm.regression_line,
+            c=kwargs.get('c', 'red'),
+            label=kwargs.get('label', "Regression Line")
+        )
         plt.legend()
 
-    plt.title(title)
+    plt.title(kwargs.get('title', ''))
     plt.xlabel(x)
     plt.ylabel(y)
 
@@ -268,11 +239,7 @@ def cluster_plot(
     k: int,
     dim1: str='indices',
     dim2: str='x0',
-    tol: float=0.001,
-    iters: int=500,
-    figx: int=12,
-    figy: int=9,
-    title: str=''
+    **kwargs
 ) -> Figure:
     """Do k-means clustering and plot it.
 
@@ -284,16 +251,9 @@ def cluster_plot(
         First dimension
     dim2
         Second dimension
-    tol
-        The tolerance at which to stop clustering
-    iters
-        The number of iterations at which to stop clustering
-    figx
-        Figure width
-    figy
-        Figure height
-    title
-        Figure title
+    kwargs
+        Optional arguments for the clustering and plotting. See the KMeans
+        class for parameters
 
     Returns
     -------
@@ -301,11 +261,13 @@ def cluster_plot(
         Scatter plot of clusters
     """
     coords = CoordData(hocr)
-    coords.cluster(k, dim1=dim1, dim2=dim2, tol=tol, iters=iters)
+    coords.cluster(k, dim1=dim1, dim2=dim2, **kwargs)
 
+    figx, figy = kwargs.get('figx', 12), kwargs.get('figy', 9)
     fig, ax = plt.subplots(figsize=(figx, figy))
     plt.scatter(coords.data[dim1], coords.data[dim2], c=coords.labels)
-    plt.title(title)
+
+    plt.title(kwargs.get('title', ''))
     plt.xlabel(dim1)
     plt.ylabel(dim2)
 
