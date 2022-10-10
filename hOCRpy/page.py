@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import xml.etree.ElementTree as ET
 import lxml.html as HT
 from collections import defaultdict
@@ -19,7 +20,14 @@ class hOCR:
             Path to the hOCR file
         tesseract_output
             Whether the hOCR has been produced by Tesseract
+
+        Raises
+        ------
+            FileNotFoundError if the file does not exist
         """
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Could not find file at {path}")
+
         if tesseract_output:
             self.tree = HT.parse(path)
         else:
