@@ -40,6 +40,10 @@ class Document:
                 raise ValueError("List of pages is invalid")
             self.num_pages = len(pages)
 
+    def __getitem__(self, idx):
+        """When indexed, return the associated page."""
+        return self.pages[idx]
+
     @property
     def num_tokens(self) -> int:
         """Total number of tokens."""
