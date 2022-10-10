@@ -127,8 +127,24 @@ class KMeans:
 
         return converged
 
-    def predict(self, data: np.array) -> np.array:
-        """Fit the clusterer and partition the data into k clusters."""
+    def predict(self, data: np.array, verbose: bool=False) -> np.array:
+        """Fit the clusterer and partition the data into k clusters.
+
+        Parameters
+        ----------
+        data
+            Columnar data of two dimensions
+        verbose
+            Whether to provide training updates
+
+        Returns
+        -------
+        clusters
+            Cluster predictions indexed to the same order as the input data
+        """
+        if verbose:
+            print(f"Fitting a K-means model for {self.k} clusters...")
+
         self.data = data
         n_samples = data.shape[0]
 
@@ -145,12 +161,19 @@ class KMeans:
         while not converged and iteration < self.iters:
             old_centroids = seed.copy()
             clusters = self._get_clusters(old_centroids)
+
             # Generate new centroids by getting the mean of the clusters we've 
             # just created
             seed = np.array([
                 np.mean(clusters[key], axis=0, dtype=self.data.dtype)
                 for key in sorted(clusters.keys())
             ])
+
+            # Verbose training
+            if verbose:
+                if iteration % 2 == 0:
+                    print(f"+ Iteration: {iteration}")
+
             # Check whether the clusters have converged
             converged = self._converged(old_centroids, seed)
             iteration += 1

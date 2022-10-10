@@ -132,7 +132,8 @@ class LinearRegression:
         test_size: float=.2,
         alpha: float=0.5,
         tol: float=1e-5,
-        iters: int=500
+        iters: int=500,
+        verbose: bool=False
     ) -> None:
         """Train the model.
 
@@ -146,10 +147,15 @@ class LinearRegression:
             The tolerance at which to stop training
         iters
             The iterations at which to stop training
+        verbose
+            Send training progress updates to screen
         """
+        if verbose:
+            print("Fitting a linear regression model...")
+
         # Split the data and create a counter
         test_x, train_x, test_y, train_y = self._split_data(test_size)
-        i = 0
+        iteration = 0
 
         while True:
             # Calculate the cost, then update the weights with the learning
@@ -163,10 +169,19 @@ class LinearRegression:
                 break
 
             # If we're above the desired iterations, break
-            if iters > iters:
+            if iteration > iters:
                 break
 
-            i += 1
+            # Verbose training
+            if verbose:
+                if iteration % 100 == 0:
+                    err = np.round(self.mse, 4)
+                    print(
+                        f"Iteration: {iteration:>4}",
+                        f"| Mean-squared error: {err:>6}",
+                    )
+
+            iteration += 1
             self.w = new_w
 
         # Set the trained flag

@@ -49,7 +49,8 @@ class CoordData:
             test_size=kwargs.get('test_size', 0.2),
             alpha=kwargs.get('alpha', 0.5),
             tol=kwargs.get('tol', 1e-5),
-            iters=kwargs.get('iters', 500)
+            iters=kwargs.get('iters', 500),
+            verbose=kwargs.get('verbose', False)
         )
         self.lm = model
 
@@ -91,7 +92,10 @@ class CoordData:
             tol=kwargs.get('tol', 0.001),
             iters=kwargs.get('iters', 500)
         )
-        self.clusters = kmeans.predict(self.cluster_on)
+        self.clusters = kmeans.predict(
+            self.cluster_on,
+            verbose=kwargs.get('verbose', False)
+        )
         self.labels = kmeans.labels
 
 def lr_model(
