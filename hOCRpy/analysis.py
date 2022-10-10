@@ -173,7 +173,7 @@ def predict_columns(
 
     # Grid search the k space
     results = {}
-    for k in range(2, max_k):
+    for k in range(2, max_k + 1):
         data.cluster(k, dim1=dim1, dim2=dim2, **kwargs)
         score = silhouette_score(data.cluster_on, data.labels)
         results[k] = score
