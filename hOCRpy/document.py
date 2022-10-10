@@ -29,41 +29,41 @@ class Document:
 
         # TODO: figure out how to parse multipage hOCR docs
         if isinstance(pages, str):
-            self.pages = hOCR(pages, tesseract_output)
+            self._pages = hOCR(pages, tesseract_output)
             self.num_pages = 1
         else:
             if all(isinstance(p, str) for p in pages):
-                self.pages = [hOCR(p, tesseract_output) for p in pages]
+                self._pages = tuple(hOCR(p, tesseract_output) for p in pages)
             elif all(isinstance(p, hOCR) for p in pages):
-                self.pages = [hocr for hocr in pages]
+                self._pages = tuple(hocr for hocr in pages)
             else:
                 raise ValueError("List of pages is invalid")
             self.num_pages = len(pages)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> hOCR:
         """When indexed, return the associated page."""
-        return self.pages[idx]
+        return self._pages[idx]
+
+    def __repr__(self) -> str:
+        """Object representation."""
+        return f"hOCR Document with {self.num_pages} pages"
 
     @property
     def num_tokens(self) -> int:
         """Total number of tokens."""
-        return sum(p.num_tokens for p in self.pages)
+        return sum(p.num_tokens for p in self._pages)
 
     @property
     def text(self) -> str:
         """Return a plaintext blob of all the document tokens."""
-        page_text = [p.text for p in self.pages]
-
-        return ' '.join(page_text)
+        return ' '.join(p.text for p in self._pages)
 
     @property
     def scores(self) -> List[float]:
         """Return the confidence scores for all tokens."""
-        output = []
-        for p in self.pages:
-            output.extend(p.scores)
+        _scores = [p.scores for p in self._pages]
 
-        return output
+        return [s for p in _scores for s in p]
 
     def contact_sheet(
         self,
@@ -118,12 +118,12 @@ class Document:
         # Render each of the images
         if page_type == 'page':
             imgs = [
-                p.show_page(return_image=True, **kwargs) for p in self.pages
+                p.show_page(return_image=True, **kwargs) for p in self._pages
             ]
         elif page_type == 'structure':
             imgs = [
                 p.show_structure(return_image=True, **kwargs) for p in
-                self.pages
+                self._pages
             ]
         else:
             raise ValueError("Valid page types are `page` and `structure`")
