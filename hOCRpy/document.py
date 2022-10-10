@@ -4,15 +4,26 @@
 from .page import hOCR
 import os
 from PIL import Image
-from typing import Union
+from typing import List, Union
 
 class Document:
 
     def __init__(
         self,
-        pages: Union[str, list],
+        pages: Union[str, List[Union[str, hOCR]]],
         tesseract_output: bool=True
     ):
+        """Initialize the document.
+
+        Parameters
+        ----------
+        pages
+            The source from which to build the document. This may either be a
+            single, multi-page hOCR file, a list of path strings to individual
+            hOCR files, or hOCR objects
+        tesseract_output
+            Whether the hOCR has been produced by Tesseract
+        """
         if not isinstance(pages, str) and not isinstance(pages, list):
             raise ValueError("Invalid input. Use a path or list")
 
@@ -28,6 +39,27 @@ class Document:
             else:
                 raise ValueError("List of pages is invalid")
             self.num_pages = len(pages)
+
+    @property
+    def num_tokens(self) -> int:
+        """Total number of tokens."""
+        return sum(p.num_tokens for p in self.pages)
+
+    @property
+    def text(self) -> str:
+        """Return a plaintext blob of all the document tokens."""
+        page_text = [p.text for p in self.pages]
+
+        return ' '.join(page_text)
+
+    @property
+    def scores(self) -> List[float]:
+        """Return the confidence scores for all tokens."""
+        output = []
+        for p in self.pages:
+            output.extend(p.scores)
+
+        return output
 
     def contact_sheet(
         self,
