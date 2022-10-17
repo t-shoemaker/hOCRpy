@@ -113,10 +113,11 @@ class LinearRegression:
     
         Raises
         ------
-            ValueError if the test_size is >=1
+        AssertionError
+            If the test_size is >=1
         """
-        if test_size >= 1:
-            raise ValueError("`test_size` must be less than 1")
+        # Ensure the test size is acceptable
+        assert test_size <= 1, "`test_size` must be less than 1"
 
         # Shuffle the data and find the index at which to make the split
         order = np.random.permutation(self.num_obvs)

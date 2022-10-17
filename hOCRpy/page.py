@@ -23,7 +23,8 @@ class hOCR:
 
         Raises
         ------
-            FileNotFoundError if the file does not exist
+        FileNotFoundError
+            If the file does not exist
         """
         if not os.path.exists(path):
             raise FileNotFoundError(f"Could not find file at {path}")
@@ -187,7 +188,7 @@ class hOCR:
         Raises
         ------
         ValueError
-            If provided invalid options for 'which'
+            If provided invalid options for `which`
         """
         OPTS = {
             'area': {'div': 'div', 'class': 'ocr_carea'},

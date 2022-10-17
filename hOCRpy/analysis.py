@@ -37,7 +37,8 @@ class CoordData:
 
         Raises
         ------
-            ValueError if the coordinates are not in the data
+        ValueError
+            If the coordinates are not in the data
         """
         if x not in self.data or y not in self.data:
             valid = ', '.join(list(self.data.keys()))
@@ -76,7 +77,8 @@ class CoordData:
 
         Raises
         ------
-            ValueError if the specified dimensions are not in the data
+        ValueError
+            If the specified dimensions are not in the data
         """
         if dim1 not in self.data or dim2 not in self.data:
             validm = ', '.join(list(self.data.keys()))

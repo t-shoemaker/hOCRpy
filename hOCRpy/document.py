@@ -109,11 +109,13 @@ class Document:
 
         Raises
         ------
-            ValueError if the number of columns exceeds the number of images
-            ValueError if there is an invalid page_type
+        AssertionError
+            If the number of columns exceeds the number of images
+        ValueError
+            If there is an invalid page_type
         """
-        if num_col > self.num_pages:
-            raise ValueError("Number of columns exceeds the number of pages")
+        # Ensure that the columns do not exceed the images
+        assert num_col < self.num_pages, "Number of columns exceeds page count"
 
         # Render each of the images
         if page_type == 'page':

@@ -22,10 +22,11 @@ class KMeans:
 
         Raises
         ------
-            ValueError if less than two clusters are specified
+        AssertionError
+            If less than two clusters are specified
         """
-        if k < 2:
-            raise ValueError("You must select more than one cluster!")
+        # First, ensure that we have enough to cluster on
+        assert k >= 2, "You must select more than one cluster1")
 
         self.k = k
         self.tol = tol
