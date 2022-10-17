@@ -26,7 +26,7 @@ class KMeans:
             If less than two clusters are specified
         """
         # First, ensure that we have enough to cluster on
-        assert k >= 2, "You must select more than one cluster1")
+        assert k >= 2, "You must select more than one cluster1"
 
         self.k = k
         self.tol = tol
