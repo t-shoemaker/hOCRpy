@@ -4,8 +4,8 @@
 import numpy as np
 from typing import Tuple
 
-class LinearRegression:
 
+class LinearRegression:
     def __init__(self, x: np.array, y: np.array):
         """Initialize by binding X and Y data.
 
@@ -14,8 +14,8 @@ class LinearRegression:
         """
         # Ensure the data are floats
         if x.dtype != float:
-            x = x.astype('float64')
-            y = y.astype('float64')
+            x = x.astype("float64")
+            y = y.astype("float64")
 
         # Load in the X values and normalize them
         self.x = x[:, np.newaxis]
@@ -31,10 +31,10 @@ class LinearRegression:
         # converged
         self.gradient = np.zeros(2)
         self.w = np.random.random(2)
-        self.mse = 0.
-        self.test_mse = 0.
-        self.rsquared = 0.
-        self.slope = 0.
+        self.mse = 0.0
+        self.test_mse = 0.0
+        self.rsquared = 0.0
+        self.slope = 0.0
         self.regression_line = np.zeros(self.num_obvs)
 
         self.trained = False
@@ -93,12 +93,13 @@ class LinearRegression:
         r
             The R-squared value
         """
-        r = np.sum((pred - actual.mean()) ** 2) /\
-            np.sum((actual - actual.mean()) ** 2)
+        r = np.sum((pred - actual.mean()) ** 2) / np.sum(
+            (actual - actual.mean()) ** 2
+        )
 
         return r
 
-    def _split_data(self, test_size: float=0.2) -> Tuple[np.array]:
+    def _split_data(self, test_size: float = 0.2) -> Tuple[np.array]:
         """Split data into train and test batches.
 
         Parameters
@@ -110,7 +111,7 @@ class LinearRegression:
         -------
         batched
             Data split into train/test batches
-    
+
         Raises
         ------
         AssertionError
@@ -130,11 +131,11 @@ class LinearRegression:
 
     def fit(
         self,
-        test_size: float=.2,
-        alpha: float=0.5,
-        tol: float=1e-5,
-        iters: int=500,
-        verbose: bool=False
+        test_size: float = 0.2,
+        alpha: float = 0.5,
+        tol: float = 1e-5,
+        iters: int = 500,
+        verbose: bool = False,
     ) -> None:
         """Train the model.
 
@@ -195,4 +196,3 @@ class LinearRegression:
         self.regression_line = self.x @ self.w
         self.slope = np.gradient(self.regression_line).mean()
         self.rsquared = self._rsquared(self.regression_line, self.y)
-       

@@ -6,12 +6,12 @@ import os
 from PIL import Image
 from typing import List, Union
 
-class Document:
 
+class Document:
     def __init__(
         self,
         pages: Union[str, List[Union[str, hOCR]]],
-        tesseract_output: bool=True
+        tesseract_output: bool = True,
     ):
         """Initialize the document.
 
@@ -56,7 +56,7 @@ class Document:
     @property
     def text(self) -> str:
         """Return a plaintext blob of all the document tokens."""
-        return ' '.join(p.text for p in self._pages)
+        return " ".join(p.text for p in self._pages)
 
     @property
     def scores(self) -> List[float]:
@@ -67,14 +67,14 @@ class Document:
 
     def contact_sheet(
         self,
-        num_col: int=2,
-        width: int=595,
-        height: int=842,
-        margin: list=[5,5,5,5],
-        padding: int=1,
-        page_type: str='structure',
-        return_image: bool=False,
-        **kwargs
+        num_col: int = 2,
+        width: int = 595,
+        height: int = 842,
+        margin: list = [5, 5, 5, 5],
+        padding: int = 1,
+        page_type: str = "structure",
+        return_image: bool = False,
+        **kwargs,
     ) -> Image.Image:
         """Create a contact sheet of the whole document.
 
@@ -118,14 +118,14 @@ class Document:
         assert num_col < self.num_pages, "Number of columns exceeds page count"
 
         # Render each of the images
-        if page_type == 'page':
+        if page_type == "page":
             imgs = [
                 p.show_page(return_image=True, **kwargs) for p in self._pages
             ]
-        elif page_type == 'structure':
+        elif page_type == "structure":
             imgs = [
-                p.show_structure(return_image=True, **kwargs) for p in
-                self._pages
+                p.show_structure(return_image=True, **kwargs)
+                for p in self._pages
             ]
         else:
             raise ValueError("Valid page types are `page` and `structure`")
@@ -139,10 +139,11 @@ class Document:
         sheet_w, sheet_h = margin[0] + margin[1], margin[2] + margin[3]
         pad_w, pad_h = (num_col - 1) * padding, (num_row - 1) * padding
         size = (
-            num_col * width + sheet_w + pad_w, num_row * height + sheet_w + pad_h
+            num_col * width + sheet_w + pad_w,
+            num_row * height + sheet_w + pad_h,
         )
         # Create the sheet
-        output = Image.new('RGB', size=size, color='white')
+        output = Image.new("RGB", size=size, color="white")
 
         # Now do a row- and column-wise iteration and find where each image
         # should be positioned on the sheet
@@ -164,4 +165,3 @@ class Document:
             output.show()
         else:
             return output
-

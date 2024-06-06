@@ -9,9 +9,9 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from typing import Dict, List, Tuple, Union
 
-class hOCR:
 
-    def __init__(self, path: str, tesseract_output: bool=True):
+class hOCR:
+    def __init__(self, path: str, tesseract_output: bool = True):
         """Load and parse the hOCR.
 
         Parameters
@@ -44,10 +44,10 @@ class hOCR:
     def dim(self) -> Tuple[int]:
         """Find the dimensions of the page."""
         div = self.tree.find('.//div[@class="ocr_page"]')
-        div = div.attrib['title'].split(';')
+        div = div.attrib["title"].split(";")
         coords = div[1].split()
         dim = [int(c) for c in coords[-2:]]
-        
+
         return tuple(dim)
 
     @property
@@ -74,7 +74,7 @@ class hOCR:
     @property
     def text(self) -> str:
         """Return a plaintext blob of all the page tokens."""
-        return ' '.join(span.text for span in self.word_spans)
+        return " ".join(span.text for span in self.word_spans)
 
     @property
     def token_data(self) -> List[Tuple[List[int], float]]:
@@ -99,8 +99,7 @@ class hOCR:
         return [i[1] for i in self.token_data]
 
     def _extract_data(
-        self,
-        div: Union[HT.HtmlElement, ET.Element]
+        self, div: Union[HT.HtmlElement, ET.Element]
     ) -> Tuple[List[int], float]:
         """Extract the bounding box and confidence score of a div.
 
@@ -114,21 +113,21 @@ class hOCR:
         data
             A bounding box (list) and confidence score (float)
         """
-        # Certain page structures do not have extra info in their titles, so 
+        # Certain page structures do not have extra info in their titles, so
         # we check for this first
-        div = div.attrib['title']
-        if ';' not in div:
+        div = div.attrib["title"]
+        if ";" not in div:
             div = div.split()
             bbox = [int(b) for b in div[1:]]
-            
+
             return bbox, None
 
-        div = div.split(';')
+        div = div.split(";")
         bbox, score = div[0], div[1]
         bbox = [int(b) for b in bbox.split()[1:]]
-        
+
         # Check for a score and format accordingly
-        if any('x_wconf' in e for e in div) == False:
+        if any("x_wconf" in e for e in div) == False:
             score = None
         else:
             # We convert to a float, 0-1
@@ -163,10 +162,7 @@ class hOCR:
         return columns
 
     def show_structure(
-        self,
-        which: str='line',
-        return_image: bool=False,
-        **kwargs
+        self, which: str = "line", return_image: bool = False, **kwargs
     ) -> Image.Image:
         """Show a high-level view of page elements.
 
@@ -191,15 +187,15 @@ class hOCR:
             If provided invalid options for `which`
         """
         OPTS = {
-            'area': {'div': 'div', 'class': 'ocr_carea'},
-            'paragraph': {'div': 'p', 'class': 'ocr_par'},
-            'line': {'div': 'span', 'class': 'ocr_line'},
-            'token': {'div': 'span', 'class': 'ocrx_word'}
+            "area": {"div": "div", "class": "ocr_carea"},
+            "paragraph": {"div": "p", "class": "ocr_par"},
+            "line": {"div": "span", "class": "ocr_line"},
+            "token": {"div": "span", "class": "ocrx_word"},
         }
         if which not in OPTS:
             raise ValueError(f"Valid options: {', '.join(OPTS.keys())}")
 
-        # Query the XPath and extract the bounding boxes 
+        # Query the XPath and extract the bounding boxes
         divs = self.tree.findall(
             f".//{OPTS[which]['div']}[@class='{OPTS[which]['class']}']"
         )
@@ -207,8 +203,8 @@ class hOCR:
         bboxes = [div[0] for div in divs]
 
         # Make a page image
-        fill = kwargs.get('fill', 'black')
-        bfill = kwargs.get('bfill', 'white')
+        fill = kwargs.get("fill", "black")
+        bfill = kwargs.get("bfill", "white")
         img = PageImage(self.dim, bfill)
         # Call the structure renderer
         structure = img.make_structure(bboxes, fill=fill)
@@ -219,10 +215,7 @@ class hOCR:
             return structure
 
     def show_page(
-        self,
-        scale: bool=False,
-        return_image: bool=False,
-        **kwargs
+        self, scale: bool = False, return_image: bool = False, **kwargs
     ) -> Image.Image:
         """Render the page with tokens.
 
@@ -242,22 +235,22 @@ class hOCR:
             Rendered page
         """
         tokens = [span.text for span in self.word_spans]
-        
+
         # Make a page image
-        img = PageImage(self.dim, kwargs.get('bfill', 'white'))
+        img = PageImage(self.dim, kwargs.get("bfill", "white"))
 
         # Call the page renderer
         page = img.make_page(
             tokens,
             self.bboxes,
             self.scores,
-            outline=kwargs.get('outline', 'black'),
-            show_conf=kwargs.get('show_conf', False),
+            outline=kwargs.get("outline", "black"),
+            show_conf=kwargs.get("show_conf", False),
             scale=scale,
-            use_font=kwargs.get('use_font', 'Arial.ttf'),
-            text_fill=kwargs.get('text_fill', 'black'),
-            align=kwargs.get('align', 'center'),
-            anchor=kwargs.get('anchor', 'ms')
+            use_font=kwargs.get("use_font", "Arial.ttf"),
+            text_fill=kwargs.get("text_fill", "black"),
+            align=kwargs.get("align", "center"),
+            anchor=kwargs.get("anchor", "ms"),
         )
 
         if not return_image:
@@ -265,9 +258,9 @@ class hOCR:
         else:
             return page
 
-class PageImage:
 
-    def __init__(self, size: int, color: str='white'):
+class PageImage:
+    def __init__(self, size: int, color: str = "white"):
         """Initialize a new page
 
         Parameters
@@ -277,9 +270,9 @@ class PageImage:
         color
             Color
         """
-        self.img = Image.new(mode='RGB', size=size, color=color)
-    
-    def make_structure(self, bboxes: list, fill: str='black') -> Image.Image:
+        self.img = Image.new(mode="RGB", size=size, color=color)
+
+    def make_structure(self, bboxes: list, fill: str = "black") -> Image.Image:
         """Show a high-level view of the hOCR divs.
 
         Parameters
@@ -299,19 +292,19 @@ class PageImage:
             draw.rectangle(bbox, fill=fill)
 
         return self.img
-    
+
     def make_page(
         self,
         tokens: list,
         bboxes: list,
         scores: list,
-        outline: Union[None, str]='black',
-        show_conf: bool=False,
-        scale: bool=False,
-        use_font: str='Arial.ttf',
-        text_fill: str='black',
-        align: str='center',
-        anchor: str='ms'
+        outline: Union[None, str] = "black",
+        show_conf: bool = False,
+        scale: bool = False,
+        use_font: str = "Arial.ttf",
+        text_fill: str = "black",
+        align: str = "center",
+        anchor: str = "ms",
     ) -> Image.Image:
         """Render a page.
 
@@ -353,10 +346,7 @@ class PageImage:
 
             if scale:
                 font_size = self._scale_font(
-                    token,
-                    bbox,
-                    font_size=16,
-                    use_font=use_font
+                    token, bbox, font_size=16, use_font=use_font
                 )
                 font = ImageFont.truetype(use_font, font_size)
 
@@ -366,7 +356,7 @@ class PageImage:
                 fill=text_fill,
                 font=font,
                 align=align,
-                anchor=anchor
+                anchor=anchor,
             )
 
         return self.img
@@ -375,8 +365,8 @@ class PageImage:
         self,
         token: str,
         bbox: list,
-        font_size: int=16,
-        use_font: str='Arial.ttf'
+        font_size: int = 16,
+        use_font: str = "Arial.ttf",
     ) -> int:
         """For a given token, find the font size that best fills the bounding
         box area.
@@ -406,4 +396,3 @@ class PageImage:
             font_size -= 1
 
         return font_size
-

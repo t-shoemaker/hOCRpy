@@ -5,9 +5,9 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from typing import Dict, Union
 
-class KMeans:
 
-    def __init__(self, k: int, tol: float=0.001, iters: int=500):
+class KMeans:
+    def __init__(self, k: int, tol: float = 0.001, iters: int = 500):
         """Predefine number of clusters as well as the tolerance and
         iterations.
 
@@ -57,9 +57,7 @@ class KMeans:
         return np.sqrt(-2 * ab + b_square + a_square)
 
     def _get_clusters(
-        self,
-        centroids: np.array,
-        return_labels: bool=False
+        self, centroids: np.array, return_labels: bool = False
     ) -> Union[Dict[int, int], np.array]:
         """Determine which observations are closest to each cluster.
 
@@ -84,7 +82,7 @@ class KMeans:
         # Find the distance between each observation and the centroids
         distances = self._dist(self.data, centroids)
 
-        # For each observation, find the index of the minimum value. This 
+        # For each observation, find the index of the minimum value. This
         # index will correspond to the cluster
         closest = np.argmin(distances, axis=1)
         for idx, cluster_id in enumerate(closest):
@@ -97,14 +95,12 @@ class KMeans:
         return clusters
 
     def _converged(
-        self,
-        old_centroids: np.array,
-        new_centroids: np.array
+        self, old_centroids: np.array, new_centroids: np.array
     ) -> bool:
         """Check to see whether the centroids are still moving.
 
         This is a simple check: look at the distance between the old centroids
-        and the new ones. If it hasn't changed much, we're done. The tolerance 
+        and the new ones. If it hasn't changed much, we're done. The tolerance
         metric defines the cutoff
 
         Parameters
@@ -122,13 +118,13 @@ class KMeans:
         # Get distances
         distances = self._dist(old_centroids, new_centroids)
 
-        # Are the distances under the tolerance? We check the diagonal of the 
+        # Are the distances under the tolerance? We check the diagonal of the
         # distance matrix we've just created
         converged = np.max(distances.diagonal()) <= self.tol
 
         return converged
 
-    def predict(self, data: np.array, verbose: bool=False) -> np.array:
+    def predict(self, data: np.array, verbose: bool = False) -> np.array:
         """Fit the clusterer and partition the data into k clusters.
 
         Parameters
@@ -156,19 +152,21 @@ class KMeans:
         # Begin by assuming the centroids exceed our tolerance
         converged = False
 
-        # Depending on the points chosen, it can take a while for a clusterer to 
+        # Depending on the points chosen, it can take a while for a clusterer to
         # Converge. We optionally include a max iteration cutoff
         iteration = 0
         while not converged and iteration < self.iters:
             old_centroids = seed.copy()
             clusters = self._get_clusters(old_centroids)
 
-            # Generate new centroids by getting the mean of the clusters we've 
+            # Generate new centroids by getting the mean of the clusters we've
             # just created
-            seed = np.array([
-                np.mean(clusters[key], axis=0, dtype=self.data.dtype)
-                for key in sorted(clusters.keys())
-            ])
+            seed = np.array(
+                [
+                    np.mean(clusters[key], axis=0, dtype=self.data.dtype)
+                    for key in sorted(clusters.keys())
+                ]
+            )
 
             # Verbose training
             if verbose:
@@ -187,14 +185,10 @@ class KMeans:
 
         return self.clusters
 
-class ClusterResults:
 
+class ClusterResults:
     def __init__(
-        self,
-        results: Dict[int, float],
-        best_k: int,
-        labels:
-        np.array
+        self, results: Dict[int, float], best_k: int, labels: np.array
     ):
         """Initialize a container to hold information about a clustering
         run/analysis.
@@ -211,13 +205,14 @@ class ClusterResults:
         self.results = results
         self.best_k = best_k
         self.labels = labels
-       
+
     def __repr__(self) -> str:
         output = f"Column prediction\n-----------------\n"
         output += f"Silhouette Scores: {self.results}\nBest k: {self.best_k}"
 
         return output
- 
+
+
 def silhouette_score(data: np.array, labels: np.array) -> float:
     """Calculate the silhouette score for k clusters on a dataset.
 
@@ -242,19 +237,20 @@ def silhouette_score(data: np.array, labels: np.array) -> float:
         # Select the relevant data points
         cluster = data[clusters[k]]
         # Get the mean Euclidean distance between all points in this cluster
-        mean_dist = np.mean(cdist(cluster, cluster, 'euclidean'))
+        mean_dist = np.mean(cdist(cluster, cluster, "euclidean"))
 
-        # Get the mean Euclidean distance between all points in this cluster 
+        # Get the mean Euclidean distance between all points in this cluster
         # and every other cluster
         other_k_dist = [
-            np.mean(cdist(cluster, data[clusters[_k]])) for _k in clusters
+            np.mean(cdist(cluster, data[clusters[_k]]))
+            for _k in clusters
             if _k != k
         ]
 
         # Find the closest other cluster (it will be the shortest distance
         other_k_dist = np.min(other_k_dist)
 
-        # Finding the silhouette score is relatively straightforward: take the 
+        # Finding the silhouette score is relatively straightforward: take the
         # other cluster's distance and subtract it from this cluster's mean
         # distance. Then divide that by the max of both values
         coeff = (other_k_dist - mean_dist) / max(mean_dist, other_k_dist)
@@ -262,4 +258,3 @@ def silhouette_score(data: np.array, labels: np.array) -> float:
 
     # Return the average silhouette score for all clusters
     return np.mean(scores)
-

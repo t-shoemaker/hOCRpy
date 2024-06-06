@@ -8,21 +8,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
-class CoordData:
 
+class CoordData:
     def __init__(self, hocr: hOCR):
         """Extract the bounding boxes from a hOCR page."""
         arr = np.array(hocr.bboxes)
         # Store in a dictionary, along with the indicies
         self.data = {
-            'x0': arr[:,0],
-            'y0': arr[:,1],
-            'x1': arr[:,2],
-            'y1': arr[:,3],
-            'indices': np.array(range(len(arr)))
+            "x0": arr[:, 0],
+            "y0": arr[:, 1],
+            "x1": arr[:, 2],
+            "y1": arr[:, 3],
+            "indices": np.array(range(len(arr))),
         }
 
-    def fit_lm(self, x: str='', y: str='', **kwargs) -> None:
+    def fit_lm(self, x: str = "", y: str = "", **kwargs) -> None:
         """Fit a least-squares linear regression model to the coordinates.
 
         Parameters
@@ -41,26 +41,22 @@ class CoordData:
             If the coordinates are not in the data
         """
         if x not in self.data or y not in self.data:
-            valid = ', '.join(list(self.data.keys()))
+            valid = ", ".join(list(self.data.keys()))
             raise ValueError(f"Valid coordinate data: {valid}")
 
         x, y = self.data[x], self.data[y]
         model = LinearRegression(x, y)
         model.fit(
-            test_size=kwargs.get('test_size', 0.2),
-            alpha=kwargs.get('alpha', 0.5),
-            tol=kwargs.get('tol', 1e-5),
-            iters=kwargs.get('iters', 500),
-            verbose=kwargs.get('verbose', False)
+            test_size=kwargs.get("test_size", 0.2),
+            alpha=kwargs.get("alpha", 0.5),
+            tol=kwargs.get("tol", 1e-5),
+            iters=kwargs.get("iters", 500),
+            verbose=kwargs.get("verbose", False),
         )
         self.lm = model
 
     def cluster(
-        self,
-        k: int,
-        dim1: str='indices',
-        dim2: str='x0',
-        **kwargs
+        self, k: int, dim1: str = "indices", dim2: str = "x0", **kwargs
     ) -> None:
         """Do k-means clustering on the points.
 
@@ -81,7 +77,7 @@ class CoordData:
             If the specified dimensions are not in the data
         """
         if dim1 not in self.data or dim2 not in self.data:
-            validm = ', '.join(list(self.data.keys()))
+            valid = ", ".join(list(self.data.keys()))
             raise ValueError(f"Valid dimensions: {valid}")
 
         # Get the data to cluster on
@@ -90,21 +86,16 @@ class CoordData:
 
         # Initialize and fit a k-means clusterer
         kmeans = KMeans(
-            k,
-            tol=kwargs.get('tol', 0.001),
-            iters=kwargs.get('iters', 500)
+            k, tol=kwargs.get("tol", 0.001), iters=kwargs.get("iters", 500)
         )
         self.clusters = kmeans.predict(
-            self.cluster_on,
-            verbose=kwargs.get('verbose', False)
+            self.cluster_on, verbose=kwargs.get("verbose", False)
         )
         self.labels = kmeans.labels
 
+
 def lr_model(
-    hocr: hOCR,
-    x: str='indices',
-    y: str='x0',
-    **kwargs
+    hocr: hOCR, x: str = "indices", y: str = "x0", **kwargs
 ) -> LinearRegression:
     """Return a least-squares linear regression model.
 
@@ -128,13 +119,14 @@ def lr_model(
 
     return data.lm
 
+
 def predict_columns(
     hocr: hOCR,
-    max_k: int=4,
-    dim1: str='indices',
-    dim2: str='x0',
-    r2: float=0.1,
-    **kwargs
+    max_k: int = 4,
+    dim1: str = "indices",
+    dim2: str = "x0",
+    r2: float = 0.1,
+    **kwargs,
 ) -> ClusterResults:
     """Use K-means clustering/silhouette scores to determine the number of
     columns.
@@ -188,12 +180,13 @@ def predict_columns(
     # Store everything in a container and return it
     return ClusterResults(results, best_k, data.labels)
 
+
 def bbox_plot(
     hocr: hOCR,
-    x: str='indices',
-    y: str='x0',
-    regression_line: bool=True,
-    **kwargs
+    x: str = "indices",
+    y: str = "x0",
+    regression_line: bool = True,
+    **kwargs,
 ) -> Figure:
     """Plot coordinate data from the bounding boxes.
 
@@ -219,7 +212,7 @@ def bbox_plot(
     data = CoordData(hocr)
     x_data, y_data = data.data[x], data.data[y]
 
-    figx, figy = kwargs.get('figx', 12), kwargs.get('figy', 9)
+    figx, figy = kwargs.get("figx", 12), kwargs.get("figy", 9)
     fig, ax = plt.subplots(figsize=(figx, figy))
     plt.plot(x_data, y_data)
 
@@ -229,23 +222,20 @@ def bbox_plot(
         plt.plot(
             x_data,
             data.lm.regression_line,
-            c=kwargs.get('c', 'red'),
-            label=kwargs.get('label', "Regression Line")
+            c=kwargs.get("c", "red"),
+            label=kwargs.get("label", "Regression Line"),
         )
         plt.legend()
 
-    plt.title(kwargs.get('title', ''))
+    plt.title(kwargs.get("title", ""))
     plt.xlabel(x)
     plt.ylabel(y)
 
     plt.show()
 
+
 def cluster_plot(
-    hocr: hOCR,
-    k: int,
-    dim1: str='indices',
-    dim2: str='x0',
-    **kwargs
+    hocr: hOCR, k: int, dim1: str = "indices", dim2: str = "x0", **kwargs
 ) -> Figure:
     """Do k-means clustering and plot it.
 
@@ -269,13 +259,12 @@ def cluster_plot(
     coords = CoordData(hocr)
     coords.cluster(k, dim1=dim1, dim2=dim2, **kwargs)
 
-    figx, figy = kwargs.get('figx', 12), kwargs.get('figy', 9)
+    figx, figy = kwargs.get("figx", 12), kwargs.get("figy", 9)
     fig, ax = plt.subplots(figsize=(figx, figy))
     plt.scatter(coords.data[dim1], coords.data[dim2], c=coords.labels)
 
-    plt.title(kwargs.get('title', ''))
+    plt.title(kwargs.get("title", ""))
     plt.xlabel(dim1)
     plt.ylabel(dim2)
 
     plt.show()
-
